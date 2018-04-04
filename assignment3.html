@@ -18,6 +18,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.21.0/d3-legend.min.js"></script>
 	<!-- Simple statistics for Jenks natural breaks -->
 	<script src="https://unpkg.com/simple-statistics@2.3.0/dist/simple-statistics.min.js"></script>
+	<script src="js/jenks.js"></script>
 
 </head>
 <body>
@@ -73,8 +74,8 @@
 						</select>
 						&nbsp
 						<b>Scales:  </b>
-						<button id='linearButton' class="btn btn-sm active" aria-pressed="true">Linear</button>
-						<button id='ckmButton' class="btn btn-sm">cK Means</button>
+						<!--<button id='linearButton' class="btn btn-sm">Unclassed</button>-->
+						<button id='ckmButton' class="btn btn-sm active" aria-pressed="true">Jenks Natural Breaks</button>
 						<button id='quantileButton' class="btn btn-sm">Quantile</button>
 						<button id='eqIntButton' class="btn btn-sm">Equal Interval</button>
 					</span>
@@ -124,14 +125,24 @@
 
 	// Geographic projection + scales
 	var proj = d3.geoPath().pointRadius(2);
-	var color_scale = colorbrewer.GnBu[5],
-	linear_scale = d3.scaleLinear().domain([0, 100]).range(color_scale),
-	quantile_scale = d3.scaleQuantize().domain([0, 100]).range(color_scale),
+	var color_scale = colorbrewer.GnBu[5];
+
+	// linear_scale = d3.scaleLinear().domain([0, 100]).range(color_scale),
+	// quantile_scale = d3.scaleQuantize().domain([0, 100]).range(color_scale),
+	// jenks_scale = d3.scaleThreshold().range(color_scale),
+	// equal_interval_scale = d3.scaleThreshold().range(color_scale),	// interval
+	// hist_scale = d3.scaleLinear().domain([0, 100]).range([0, width]), // hist X
+	// hist_y = d3.scaleLinear().range([histHeight, 0]);	// hist Y
+	// current_scale = linear_scale;	// Save scales as global scale variable
+	linear_scale = d3.scaleLinear().range(color_scale),
+	linear_histscale = d3.scaleLinear().range(color_scale),
+	quantile_scale = d3.scaleQuantile().range(color_scale),
 	jenks_scale = d3.scaleThreshold().range(color_scale),
 	equal_interval_scale = d3.scaleThreshold().range(color_scale),	// interval
-	hist_scale = d3.scaleLinear().domain([0, 100]).range([0, width]), // hist X
-	hist_y = d3.scaleLinear().range([histHeight, 0]),	// hist Y
-	current_scale = linear_scale;	// Save scales as global scale variable
+	hist_scale = d3.scaleLinear().range([0, width]), // hist X
+	hist_y = d3.scaleLinear().range([histHeight, 0]);	// hist Y
+
+	current_scale = jenks_scale;	// Save scales as global scale variable
 
 	//TODO: change the chart variables and formats based on the divs defined above
 	// Chart variables - this is the place you will need to replace the variable names
@@ -170,7 +181,7 @@
 
 		function notInfinity(p, n) {
 			// Function to catch errors when normalizing an attribute
-			console.log(p, n);
+			// console.log(p, n);
 			if (!+n) {
 				return 0;
 			} else {
@@ -264,21 +275,19 @@
 			var max = d3.max(data, function(d) { return d; }),
 			min = d3.min(data, function(d) { return d; });
 
-			jenks_temp = ss.ckmeans(data, numClasses)
-			.reduce(function(a, b) {
-				a_max = d3.max(a);
-				b_max = d3.max(b);
-				return [a_max].concat(b);
-			});
-			jenks_temp.unshift(d3.min(data));	// add the minimum threshold
+			var jenksNaturalBreaks = jenks(data, numClasses);
+			console.log(jenksNaturalBreaks);
+			// console.log('jenksNaturalBreaks', jenksNaturalBreaks);
+			jenks_scale.domain(jenksNaturalBreaks).range(color_scale);
 
 			hist_scale.domain([min, max]);			// set the histogram up dynamically
 			// Classification scales.
-			linear_scale.domain([min, max]).range(color_scale);
-			quantile_scale.domain([min, max]).range(color_scale);
-			jenks_scale
-			.domain(jenks_temp)
-			.range(color_scale);
+			linear_scale.domain(data).range(color_scale);
+
+			quantile_scale
+			.range(color_scale)
+			.domain(data);
+
 			equal_interval_scale
 			.domain(ss.equalIntervalBreaks(data, numClasses))
 			.range(color_scale);
@@ -363,7 +372,7 @@
 				setScales(hist_var);
 
 				// set histogram
-				var currentBins = bins.domain(current_scale.domain())(hist_var);
+				var currentBins = bins.domain(linear_histscale.domain())(hist_var);
 				var y = hist_y.domain([0, d3.max(currentBins, function(e) { return e.length; })]);
 
 				// Draw histogram
@@ -432,7 +441,9 @@
 						.on('mouseout', mouseOut)
 						.on('mousemove', mousemoveFunc)
 						.attr("d", proj)
-						.style('fill', function(c) { return current_scale(+c.properties[d.var]); });
+						.style('fill', function(c) {
+									return current_scale(+c.properties[d.var]);
+						});
 
 						// add legend
 						chart.append('g')
