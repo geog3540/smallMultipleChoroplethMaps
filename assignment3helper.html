@@ -85,26 +85,26 @@
 			<div class="row">
 				<div class="col-sm-6">
 					<span><p><h3 class='mapTitle'>Lung Cancer</h3>Number of deaths from lung cancer.</p></span>
-					<div id="divMap1"></div>
-					<div id="divHist1"></div>
+					<div id="lungMAP"></div>
+					<div id="lungHIST"></div>
 				</div>
 				<div class="col-sm-6">
 					<h3 class='mapTitle'>Adult Smokers</h3><p>Percent of a County's Adult Population who smoke.</p>
-					<div id="divMap2"></div>
-					<div id="divHist2"></div>
+					<div id="smokerMAP"></div>
+					<div id="smokerHIST"></div>
 				</div>
 			</div>
 
 			<div class="row">
 				<div class="col-sm-6">
 					<h3 class='mapTitle'>Healthcare Cost</h3><p>Amount of money spent on healthcare by the county.</p>
-					<div id="divMap3"></div>
-					<div id="divHist3"></div>
+					<div id="healthcareMAP"></div>
+					<div id="healthcareHIST"></div>
 				</div>
 				<div class="col-sm-6">
 					<h3 class='mapTitle'>Senior Citizens</h3><p>Number of the County's Adult Population who are 65+ years old.</p>
-					<div id="divMap4"></div>
-					<div id="divHist4"></div>
+					<div id="seniorMAP"></div>
+					<div id="seniorHIST"></div>
 				</div>
 			</div>
 		</div>
@@ -115,7 +115,7 @@
 	///////////////////////////////////
 
 	// Height, width, margins
-	var chartWidth = d3.select('#divMap1')
+	var chartWidth = d3.select('#lungMAP')
 	.node().getBoundingClientRect().width,
 	chartHeight = chartWidth / 2.5;
 	var margin = {top: 10, right: 20, bottom: 10, left:20},
@@ -147,13 +147,13 @@
 	//TODO: change the chart variables and formats based on the divs defined above
 	// Chart variables - this is the place you will need to replace the variable names
 	var charts = [
-		{'map': '#divMap1', 'hist': '#divHist1', 'form': '',
+		{'map': '#lungMAP', 'hist': '#lungHIST', 'form': '',
 		'var': 'lungDeathPerYear', 'ax': 'County Lung Cancer Death Density'},
-		{'map': '#divMap2', 'hist': '#divHist2', 'form': '%',
+		{'map': '#smokerMAP', 'hist': '#smokerHIST', 'form': '%',
 		'var': 'pctSmokers', 'ax': '% Smokers'},
-		{'map': '#divMap3', 'hist': '#divHist3', 'form': '$',
+		{'map': '#healthcareMAP', 'hist': '#healthcareHIST', 'form': '$',
 		'var': 'healthCosts', 'ax': '$ Spent'},
-		{'map': '#divMap4', 'hist': '#divHist4', 'form': '%',
+		{'map': '#seniorMAP', 'hist': '#seniorHIST', 'form': '%',
 		'var': 'numSr', 'ax': '65+ Population Density'}],
 		buttons = [
 			{'btn': '#linearButton', 'scale': linear_scale},
@@ -192,7 +192,6 @@
 		function classPolygon(county, map) {
 			// Function to create the correct county name.
 			// (e.g. Johsnon county, FIPS 19) >> 'counties.lung.county19'
-			//TODO: enter the id of the polygon
 			return 'polygons ' + map + ' county' + county.properties.FIPS;
 		}
 
@@ -208,9 +207,7 @@
 		function mouseOver2(county, attr) {
 			/* Mouse over routine
 			Highlight the county on all maps, adjust the tooltip */
-			//TODO: enter the id of the polygon
 			var fips = county.properties.FIPS,
-			//TODO: enter the name of the polygon
 			name = county.properties.County;
 
 			return charts.forEach(function(d) {
@@ -233,7 +230,6 @@
 
 		function mousemoveFunc(county) {
 			/* Moves tooltip */
-			//TODO: enter the id of the polygon
 			var fips = '.county' + county.properties.FIPS;
 
 			charts.forEach(function(d) {
@@ -337,9 +333,7 @@
 		.scale(current_scale);
 
 		// mapping
-		//TODO: this is where you read the data
 		d3.json('data/out.geojson', function(data) {
-			console.log(data);
 			// set up the projection
 			var polygons = data;
 			proj.projection(d3.geoAlbers().fitSize([width, height], polygons));
