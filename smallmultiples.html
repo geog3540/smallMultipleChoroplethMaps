@@ -60,7 +60,7 @@
 			<hr />
 			<div class="row">
 				<div class="col-sm-4">
-					<p>Data from <a href="data.iowa.gov">Data.Iowa.gov</a>, maps by Ryan Larson.</p>
+					<p>Data from <a href="data.iowa.gov">Data.Iowa.gov</a>, maps by Ryan Larson & Caglar Koylu.</p>
 				</div>
 				<div class='col-sm-8 mapButtons'>
 					<span class="pull-right">
@@ -102,13 +102,18 @@
 					<div id="divHist3"></div>
 				</div>
 				<div class="col-sm-6">
-					<h3 class='mapTitle'>Senior Citizens</h3><p>Percentage of population above 65+ years old.</p>
+					<h3 class='mapTitle'>Senior Citizens</h3><p>Percentage of population above 65 years old.</p>
 					<div id="divMap4"></div>
 					<div id="divHist4"></div>
 				</div>
 			</div>
 		</div>
 	</div>
+	<div id="confirm">
+		<div class="message">This is a warning message.</div><br>
+		<button class="yes">OK</button>
+	</div>
+	<input type="button" value="Click Me" onclick="functionAlert();"/>
 	<script>
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,31 +123,31 @@
 	var projection = d3.geoAlbers();
 	// Relative placement of legend that ranges between 0 and 1.
 	// 0 is the start, whereas 1 i the end of each panel.
-	// If you wan to put the legend on the left, then use 0.
+	// If you want to put the legend on the left, then use 0.
 	// legendY = 0.5 puts the legend in the middle of the Y Axis.
 	var legendX = 0.84, legendY = 0.5
 
-  // id attribute and the name attribute to be used in the tooltip
+	// id attribute and the name attribute to be used in the tooltip
 	var idAttribute = 'FIPS', nameAttribute = 'County';
 
 	// Find the abbreviations of color names from https://colorbrewer2.org/
-	var colors =  colorbrewer.GnBu;
+	var colors =  colorbrewer.YlOrBr;
 
 	// Chart/map attributes (variables) and formats based on the divs defined above
 	// For attribute 1 (the same for all others), see the description of the parameters below.
 	// att1: the actual name of the attribute on the file
 	// att1: the alias that you would like to use. This could be anything you can type.
-  // att1format: enter the d3.format string to display the variables in the format you like
+	// att1format: enter the d3.format string to display the variables in the format you like
 	// Check this link on how to specify the desired format:
 	// https://observablehq.com/@d3/d3-format
 	var att1 = 'lungDeathPerYear', att1alias = 'Lung Cancer Death Density', att1format = '.0f',
 	att2 = 'pctSmokers', att2alias =  '% Smokers', att2format = '.0f',
 	att3 = 'healthCosts', att3alias = '$ Spent', att3format = '.0f',
-	att4 = 'numSr', att4alias = '65+ Population Density', att4format = '.1f';
+	att4 = 'numSr', att4alias = '% 65+', att4format = '.1f';
 
 	//DO NOT CHANGE ANYTHING BELOW THIS POINT UNLESS YOU KNOW WHAT YOU ARE DOING
 	////////////////////////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////
 
 
 	////////////////////////////////////////////
@@ -221,7 +226,7 @@
 		d3.json(polygonJSONFile).then(function(data) {
 			// set up the projection
 			var polygons = data;
-      var proj = d3.geoPath().pointRadius(2);
+			var proj = d3.geoPath().pointRadius(2);
 			// TODO: change the projection details here below - including specific parameters such as rotation, extent, etc.
 			proj.projection(projection.fitSize([width, height], polygons));
 
@@ -241,9 +246,15 @@
 				d3.select(d.btn).on('click', function() {
 					d3.selectAll('.btn').classed('active', false);
 					d3.select(this).classed('active', true);
-          var buttonid = d3.select(this).node().id;
-				  if(buttonid == "ckmButton"){
+					var buttonid = d3.select(this).node().id;
+					if(buttonid == "ckmButton"){
+						$(".container").fadeOut(200);
+						functionAlert("Maps cannot be compared visually when natural breaks classification is selected.");
 						selectedClassification = "naturalbreaks";
+					}else if(buttonid == "eqIntButton"){
+						$(".container").fadeOut(200);
+						functionAlert("When equal interval classification is selected, all maps should be"
+						+ " in the same scale (e.g., percentage) and have the same minimum and maximum values");
 					}else {
 						selectedClassification = "other";
 					}
@@ -339,8 +350,8 @@
 							return current_scale(+c.properties[d.var]);
 						});
 
-            holdLegend.labelFormat(d.form);
-  					// add the legend
+						holdLegend.labelFormat(d.form);
+						// add the legend
 						panel.append('g')
 						.attr("class", "legendQuant")
 						.attr("transform", "translate(" + (width * legendX) + "," + (height * legendY) + ")");
@@ -429,7 +440,7 @@
 						var tip = d.map + '-tooltip';
 
 						map.select(('.polygon'+id))
-						.style('stroke', 'white')
+						.style('stroke', "#dadada")
 						.style('opacity', '0.85');
 						// map tooltip
 						d3.select(tip)
@@ -437,7 +448,7 @@
 					});
 				}
 
-					// Function to set scales depending on the attribute
+				// Function to set scales depending on the attribute
 				function setScales(data) {
 
 					//grab the number of classes from the dropdown list
@@ -454,7 +465,7 @@
 					.domain([min, max])
 					.range(color_scale);
 
-          // add the minimum value to the beginning of the breaks to avoid showin NaN values in the legend
+					// add the minimum value to the beginning of the breaks to avoid showin NaN values in the legend
 					var naturalbreaks = ss.ckmeans(data, color_scale.length).map(v => v.pop())
 					//naturalbreaks.unshift(min);
 
@@ -507,6 +518,17 @@
 						d3.select(d.map).select('.legendQuant').call(holdLegend.scale(current_scale));
 					});
 				} // end rescale, apply to buttons
+
+				function functionAlert(msg, myYes) {
+					var confirmBox = $("#confirm");
+					confirmBox.find(".message").text(msg);
+					confirmBox.find(".yes").unbind().click(function() {
+						confirmBox.hide();
+						 $(".container").fadeTo(200,1);
+					});
+					confirmBox.find(".yes").click(myYes);
+					confirmBox.show();
+				}
 				</script>
 				<!-- javascript -->
 
