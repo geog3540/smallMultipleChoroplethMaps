@@ -113,7 +113,7 @@
 		<div class="message">This is a warning message.</div><br>
 		<button class="yes">OK</button>
 	</div>
-	<input type="button" value="Click Me" onclick="functionAlert();"/>
+
 	<script>
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,8 +154,6 @@
 	// Global variables for the small multiples
 	///////////////////////////////////////////
 	var numClasses = d3.select('#classDropdown').node().value;
-	//this variable is used only to fix the legend elements for natural breaks classification
-	var selectedClassification = "others"
 	var color_scale = colors[numClasses];
 
 	// Height, width, margins
@@ -249,14 +247,12 @@
 					var buttonid = d3.select(this).node().id;
 					if(buttonid == "ckmButton"){
 						$(".container").fadeOut(200);
-						functionAlert("Maps cannot be compared visually when natural breaks classification is selected.");
-						selectedClassification = "naturalbreaks";
+						functionAlert("Maps cannot be compared visually when natural breaks classification is selected. " +
+					  "Because natural breaks focuses on the recise distribution of each attribute along the number line.");
 					}else if(buttonid == "eqIntButton"){
 						$(".container").fadeOut(200);
 						functionAlert("When equal interval classification is selected, all maps should be"
-						+ " in the same scale (e.g., percentage) and have the same minimum and maximum values");
-					}else {
-						selectedClassification = "other";
+						+ " in the same scale (e.g., percentage) and have the same range (min-max values) to be comparable.");
 					}
 
 					current_scale = d.scale;
@@ -465,19 +461,9 @@
 					.domain([min, max])
 					.range(color_scale);
 
-					// add the minimum value to the beginning of the breaks to avoid showin NaN values in the legend
 					var naturalbreaks = ss.ckmeans(data, color_scale.length).map(v => v.pop())
-					//naturalbreaks.unshift(min);
-
 					jenks_scale.domain(naturalbreaks).range(color_scale);
-
-					if(selectedClassification == "naturalbreaks"){
-						current_scale = jenks_scale
-						// console.log(naturalbreaks);
-					}
-
 					linear_scale.domain([min, max]).range(color_scale);
-
 					hist_scale.domain([min, max]);			// set the histogram up dynamically
 				}
 
